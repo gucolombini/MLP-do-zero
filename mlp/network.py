@@ -13,6 +13,8 @@ class MLP:
         self.output_size = output_size
         self.learning_rate = learning_rate
 
+        # inicialização He (Kaiming initialization) para ReLU
+        # evita gradientes muito pequenos/explodindo e mantém variância estável entre camadas
         self.weights1 = np.random.randn(input_size, hidden1_size) * np.sqrt(2 / input_size)
         self.weights2 = np.random.randn(hidden1_size, hidden2_size) * np.sqrt(2 / hidden1_size)
         self.weights3 = np.random.randn(hidden2_size, output_size) * np.sqrt(2 / hidden2_size)
@@ -53,7 +55,7 @@ class MLP:
                 y_batch = y[i:i+batch_size]
                 m = X_batch.shape[0]
             
-                # Forward feeding
+                # Forward pass
                 z1, a1, z2, a2, z3, y_pred = self.forward(X_batch)
 
                 loss = cross_entropy(y_batch, y_pred)
@@ -70,10 +72,10 @@ class MLP:
                 self.bias2 -= self.learning_rate * d_bias2
                 self.bias3 -= self.learning_rate * d_bias3
 
-            # LOSS da época
+            # Perda da época
             epoch_loss = total_loss / n
 
-            # ACURÁCIA da época (importante: usa forward no dataset inteiro)
+            # Precisão da época (importante: usa forward no dataset inteiro)
             _, _, _, _, _, y_pred_full = self.forward(X)
             y_pred_labels = np.argmax(y_pred_full, axis=1)
             y_true_labels = np.argmax(y, axis=1)

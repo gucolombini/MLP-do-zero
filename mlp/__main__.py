@@ -1,15 +1,22 @@
+import os
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
+
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 from keras.datasets import mnist
 from .network import MLP
+from datetime import datetime
+import json
+
 
 def accuracy(y_true, y_pred):
     y_true = np.argmax(y_true, axis=1)
     return np.mean(y_true == y_pred)
 
 
-def plot_history(history):
+def plot_history(history, save_path=None):
     epochs = range(len(history["loss"]))
 
     plt.figure(figsize=(12,5))
@@ -29,7 +36,12 @@ def plot_history(history):
     plt.ylabel("Precisão")
 
     plt.tight_layout()
-    plt.show()
+
+    if save_path:
+        plt.savefig(save_path)
+        plt.close()
+    else:
+        plt.show()
 
 def train(args):
     (X_train, y_train), (X_test, y_test) = mnist.load_data()
@@ -42,7 +54,6 @@ def train(args):
 
     classes = np.unique(y_train)
 
-    # One-Hot Encoding
     y_train = np.eye(len(classes))[np.searchsorted(classes, y_train)]
     y_test = np.eye(len(classes))[np.searchsorted(classes, y_test)]
 
@@ -69,6 +80,32 @@ def train(args):
 
     print("\n===== RESULTADOS =====")
     print(f"Accuracy: {acc:.4f}")
+
+    # Salva as métricas e o gráfico de histórico em um diretório organizado por timestamp
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    run_dir = os.path.join("results", f"run_{timestamp}")
+    os.makedirs(run_dir, exist_ok=True)
+
+    # Salva gráfico de histórico
+    plot_path = os.path.join(run_dir, "history.png")
+    plot_history(losses, save_path=plot_path)
+
+    # Salva métricas em JSON
+    metrics = {
+        "accuracy": float(acc),
+        "final_loss": float(losses["loss"][-1]),
+        "epochs": args.epochs,
+        "batch_size": args.batch_size,
+        "learning_rate": args.lr,
+        "hidden1": args.hidden1,
+        "hidden2": args.hidden2
+    }
+
+    metrics_path = os.path.join(run_dir, "metrics.json")
+    with open(metrics_path, "w") as f:
+        json.dump(metrics, f, indent=4)
+
+    print(f"\nRun salvo em: {run_dir}")
 
     if args.plot_history:
         plot_history(losses)
@@ -117,12 +154,12 @@ def main():
 
     parser.add_argument(
         "--plot-history",
-        action="store_true",
-        help="Exibe gráfico de loss e precisão"
+        action="store_true"
     )
 
     args = parser.parse_args()
     train(args)
+
 
 if __name__ == "__main__":
     main()

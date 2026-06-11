@@ -1,0 +1,9 @@
+{
+    "accuracy": 0.9731,
+    "final_loss": 0.02266527260636444,
+    "epochs": 100,
+    "batch_size": 64,
+    "learning_rate": 0.01,
+    "hidden1": 64,
+    "hidden2": 32
+}
